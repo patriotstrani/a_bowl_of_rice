@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Миска риса</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f0f0f0;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+    }
+    #gameWindow {
+        width: 650px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        border: 5px solid #ffa500; /* яркая рамка */
+    }
+    #status, #messages {
+        min-height: 50px;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: #eef;
+        border-radius: 5px;
+    }
+    button {
+        margin: 3px;
+        padding: 8px;
+        border-radius: 5px;
+        border: none;
+        background-color: #ffa500;
+        color: #fff;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    button:hover {
+        background-color: #ffb733;
+    }
+    #shop, #cookbook {
+        max-height: 200px;
+        overflow-y: auto;
+        margin-top: 10px;
+        background: #f9f9f9;
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    input[type=number] {
+        width: 50px;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+</style>
+</head>
+<body>
+
+<div id="gameWindow">
+    <h2>Миска риса</h2>
+    <div id="status"></div>
+    <div id="messages"></div>
+
+    <div id="buttons">
+        <button onclick="game.work()">Работать</button>
+        <button onclick="game.showShop()">Магазин</button>
+        <button onclick="game.buyPot()">Купить кастрюлю (20₩)</button>
+        <button onclick="game.showCook()">Готовить</button>
+        <button onclick="game.sell()">Продать блюдо</button>
+        <button onclick="game.showCookbook()">Кулинарная книга</button>
+    </div>
+
+    <div id="shop"></div>
+    <div id="cookbook"></div>
+</div>
+
+<script>
+const game = {
+    money: 50,
+    inventory: {},
+    pot: false,
+    dishes: {
+        "Жареный рис": {"Рис":1,"Морковь":1,"Яйцо":1},
+        "Суп кимчи": {"Кимчи":1,"Вода":1,"Тофу":1},
+        "Бибимбап": {"Рис":1,"Мясо":1,"Морковь":1,"Яйцо":1},
+        "Пульгоги": {"Мясо":2,"Соевый соус":1},
+        "Кимчи пицца": {"Кимчи":1,"Тесто":1,"Сыр":1},
+        "Десерт рисовый": {"Рис":1,"Сахар":1,"Молоко":1},
+        "Токпокки": {"Рисовые клецки":1,"Соус чили":1},
+        "Салат из моркови": {"Морковь":2,"Масло":1},
+        "Рамен": {"Лапша":1,"Бульон":1,"Яйцо":1},
+        "Кимчи рис": {"Рис":1,"Кимчи":1}
+    },
+    store: {
+        "Рис":5,"Морковь":3,"Яйцо":2,"Кимчи":7,"Мясо":10,"Соевый соус":4,"Тесто":5,
+        "Сыр":4,"Сахар":2,"Молоко":3,"Рисовые клецки":4,"Соус чили":3,"Масло":2,"Лапша":3,"Бульон":4,"Тофу":5
+    },
+
+    updateStatus(){
+        document.getElementById("status").innerHTML = 
+            Деньги: ${this.money}₩<br>Инвентарь: ${JSON.stringify(this.inventory)}<br>Есть кастрюля: ${this.pot ? "Да" : "Нет"};
+    },
+
+    updateMessages(msg=""){
+        document.getElementById("messages").innerHTML = msg;
+    },
+
+    work(){
+        let earnings = Math.floor(Math.random()*11)+5;
+        this.money += earnings;
+        this.updateMessages(Вы заработали ${earnings}₩);
+        this.updateStatus();
+    },
+
+    showShop(){
+        let shopDiv = document.getElementById("shop");
+        shopDiv.innerHTML = "<b>=== Магазин ===</b><br>";
+        for(let item in this.store){
+            shopDiv.innerHTML += `${item} (${this.store[item]}₩) 
+            <input type="number" id="qty_${item}" min="1" value="1">
+            <button onclick="game.buyProduct('${item}')">Купить</button><br>`;
+        }
+        this.updateMessages("Выберите продукт и количество, затем нажмите 'Купить'.");
+    },
+
+    buyProduct(item){
+        let qty = parseInt(document.getElementById("qty_" + item).value);
+        if(isNaN(qty) || qty<1){
+            this.updateMessages("Некорректное количество");
+            return;
+        }
+        let total = this.store[item]*qty;
+        if(this.money>=total){
+            this.money -= total;
+            this.inventory[item] = (this.inventory[item]||0)+qty;
+            this.updateMessages(Вы купили ${qty} ${item});
+            this.updateStatus();
+        } else {
+            this.updateMessages("Недостаточно денег!");
+        }
+    },
+
+    buyPot(){
+        if(this.pot){
+            this.updateMessages("У вас уже есть кастрюля");
+        } else if(this.money>=20){
+            this.money -= 20;
+            this.pot = true;
+            this.updateMessages("Вы купили кастрюлю!");
+        } else {
+            this.updateMessages("Недостаточно денег!");
+        }
+        this.updateStatus();
+    },
+
+    showCook(){
+        let cookDiv = document.getElementById("cookbook");
+        cookDiv.innerHTML = "<b>Выберите блюдо для готовки:</b><br>";
+        for(let dish in this.dishes){
+            cookDiv.innerHTML += ${dish} <button onclick="game.cookDish('${dish}')">Готовить</button><br>;
+        }
+        this.updateMessages("Нажмите кнопку рядом с блюдом для готовки");
+    },
+
+    cookDish(dish){
+        if(!this.pot){
+            this.updateMessages("У вас нет кастрюли!");
+            return;
+        }
+        let missing = [];
+        for(let item in this.dishes[dish]){
+            let need = this.dishes[dish][item];
+            if(!this.inventory[item] || this.inventory[item]<need){
+                missing.push(${item} x${need - (this.inventory[item]||0)});
+            }
+        }
+        if(missing.length>0){
+            this.updateMessages("Недостаточно ингредиентов: "+missing.join(", "));
+            return;
+        }
+        for(let item in this.dishes[dish]){
+            this.inventory[item]-=this.dishes[dish][item];
+            if(this.inventory[item]<=0) delete this.inventory[item];
+        }
+        this.inventory[dish] = (this.inventory[dish]||0)+1;
+        this.updateMessages(Вы приготовили ${dish});
+        this.updateStatus();
+    },
+
+    sell(){
+        let sellable = Object.keys(this.inventory).filter(i=>this.dishes[i]);
+        if(sellable.length===0){
+            this.updateMessages("Нет блюд для продажи");
+            return;
+        }
+        let item = sellable[Math.floor(Math.random()*sellable.length)];
+        let price = Math.floor(Math.random()*21)+10;
+        if(Math.random()<0.2){
+            this.money -=10;
+            this.updateMessages("Вас поймали и выписали штраф 10₩!");
+        } else {
+            this.inventory[item]-=1;
+            if(this.inventory[item]<=0) delete this.inventory[item];
+            this.money += price;
+            this.updateMessages(Вы продали ${item} за ${price}₩);
+        }
+        this.updateStatus();
+    },
+
+    showCookbook(){
+        let text = "<b>=== Кулинарная книга ===</b><br>";
+        for(let dish in this.dishes){
+            let ingredients = [];
+            for(let ing in this.dishes[dish]){
+                ingredients.push(${ing} x${this.dishes[dish][ing]});
+            }
+            text += ${dish}: ${ingredients.join(", ")}<br>;
+        }
+        document.getElementById("cookbook").innerHTML = text;
+        this.updateMessages("Кулинарная книга открыта ниже.");
+    }
+};
+
+game.updateStatus();
+</script>
+
+</body>
+</html>
