@@ -22,7 +22,6 @@ const store = {
     "Соус чили":3,"Масло":2,"Лапша":3,"Бульон":4,"Тофу":5
 };
 
-// Обновление статуса
 function updateStatus() {
     let invText = Object.keys(inventory).length
         ? Object.entries(inventory).map(([k,v])=>${k}: ${v}).join("\n")
@@ -31,14 +30,12 @@ function updateStatus() {
         Деньги: ${money}₩\nИнвентарь:\n${invText}\nЕсть кастрюля: ${pot ? 'Да' : 'Нет'};
 }
 
-// Сообщения
 function updateMessages(text, delay=3000) {
     const msg = document.getElementById("messages");
     msg.innerText = text;
     if(delay>0) setTimeout(()=>msg.innerText="", delay);
 }
 
-// Работа
 function work() {
     const earnings = Math.floor(Math.random()*11)+5;
     money += earnings;
@@ -46,14 +43,12 @@ function work() {
     updateStatus();
 }
 
-// Магазин
 function showShop() {
     let shopText = "=== Магазин ===\n";
     for(const item in store) shopText += ${item}: ${store[item]}₩\n;
     updateMessages(shopText);
 }
 
-// Купить продукт
 function buyProduct() {
     let product = prompt("Введите название продукта:");
     if(!product || !store[product]) {
@@ -71,7 +66,6 @@ function buyProduct() {
     updateStatus();
 }
 
-// Купить кастрюлю
 function buyPot() {
     if(pot){updateMessages("У вас уже есть кастрюля");return;}
     if(money>=20){money-=20;pot=true;updateMessages("Вы купили кастрюлю!");}
@@ -79,7 +73,6 @@ function buyPot() {
     updateStatus();
 }
 
-// Готовка
 function cook() {
     if(!pot){updateMessages("У вас нет кастрюли!");return;}
     let dish = prompt("Введите название блюда:");
@@ -98,7 +91,6 @@ function cook() {
     updateStatus();
 }
 
-// Продажа
 function sell() {
     let sellable = Object.keys(inventory).filter(item=>dishes[item]);
     if(sellable.length===0){updateMessages("Нет блюд для продажи");return;}
@@ -109,7 +101,6 @@ function sell() {
     updateStatus();
 }
 
-// Кулинарная книга
 function showCookbook() {
     let text = "=== Кулинарная книга ===\n";
     for(const dish in dishes){
@@ -119,5 +110,4 @@ function showCookbook() {
     updateMessages(text, 5000);
 }
 
-// Инициализация
 updateStatus();
